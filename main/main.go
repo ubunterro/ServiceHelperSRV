@@ -6,14 +6,27 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"net/http"
+	"strings"
 )
 
 func setupRouter() *gin.Engine {
 	r := gin.Default()
-	r.Static("/public", "./public")
+	r.Use(headersByRequestURI())
+
+	//r.Static("/public", "./public")
+
+	r.LoadHTMLGlob("templates/*")
+
+	admin := r.Group("/public", basicAuth())
+	{
+		admin.Static("/assets", "./public/assets")
+		admin.GET("/index.html", Homepage)
+	}
 
 	client := r.Group("/api", basicAuth())
 	{
+
 		client.GET("/api", Read)
 		client.POST("/create", Create)
 		client.POST("/edit", Edit)
@@ -33,6 +46,16 @@ func setupRouter() *gin.Engine {
 	return r
 }
 
+// добавляет нужные заголовки определённым адресам, в данном случае запрашивает у браузера авторизацию для админки
+func headersByRequestURI() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if strings.HasPrefix(c.Request.RequestURI, "/public/") {
+			c.Header("WWW-Authenticate", "Basic")
+
+		}
+	}
+}
+
 func main() {
 	r := setupRouter()
 	r.Run(":8080")
@@ -50,4 +73,17 @@ func DBConn() (db *sqlx.DB) {
 		panic(err.Error())
 	}
 	return db
+}
+
+func Homepage(c *gin.Context) {
+	//var user User{}
+	_user, _ := c.Get("user")
+	user := _user.(User)
+
+	c.HTML(http.StatusOK, "index.html",
+		gin.H{
+			"userLogined": user.UserName,
+		},
+	)
+
 }

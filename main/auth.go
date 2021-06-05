@@ -9,6 +9,12 @@ import (
 	"strings"
 )
 
+type User struct {
+	Status   int
+	UserId   int
+	UserName string
+}
+
 func basicAuth() gin.HandlerFunc {
 
 	return func(c *gin.Context) {
@@ -21,26 +27,27 @@ func basicAuth() gin.HandlerFunc {
 		payload, _ := base64.StdEncoding.DecodeString(auth[1])
 		pair := strings.SplitN(string(payload), ":", 2)
 
-		authResult, userStatus, userId := authenticateUser(pair[0], pair[1])
+		authResult, user := authenticateUser(pair[0], pair[1])
 
 		if len(pair) != 2 || !authResult {
 			respondWithError(401, "Unauthorized", c)
 			return
 		}
 
-		c.Set("userStatus", userStatus)
-		c.Set("userId", userId)
+		c.Set("user", user)
+		//c.Set("userStatus", user.Status)
+		//c.Set("userId", user.UserId)
 
 		c.Next()
 	}
 }
 
-func authenticateUser(username, password string) (result bool, status int, userId int) {
+func authenticateUser(username, password string) (result bool, user User) {
 	db := DBConn()
 	var DBpasswordHash string
 
-	err := db.QueryRow("SELECT pass, status, user_id FROM users WHERE login = ?;", username).Scan(&DBpasswordHash, &status, &userId)
-	log.Println("STATUS", status)
+	err := db.QueryRow("SELECT pass, status, user_id, name FROM users WHERE login = ?;", username).Scan(&DBpasswordHash, &user.Status, &user.UserId, &user.UserName)
+	log.Println("STATUS", user.Status)
 	if err != nil {
 		fmt.Println(err.Error())
 	} else {
@@ -53,10 +60,10 @@ func authenticateUser(username, password string) (result bool, status int, userI
 
 	if err != nil {
 		log.Println(err)
-		return false, -1, userId
+		return false, user
 	} else {
 		log.Println("success")
-		return true, status, userId
+		return true, user
 	}
 
 }
