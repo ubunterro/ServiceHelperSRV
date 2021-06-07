@@ -11,7 +11,7 @@ import (
 type Order struct {
 	Id          int       `json:"id"            db:"order_id"`
 	Text        string    `json:"text"          db:"text"`
-	Time        time.Time `json:"time"          db:"time"`
+	Time        time.Time `json:"datetime"      db:"time"`
 	UserOrdered int       `json:"user_ordered"  db:"user_ordered"`
 	Username    string    `json:"name"          db:"name"`
 }
@@ -49,10 +49,13 @@ func CreateOrder(c *gin.Context) {
 
 	fmt.Println(order)
 
-	userId, _ := c.Get("userId")
+	_user, _ := c.Get("user")
+	user := _user.(User)
 
-	userIdInt, _ := strconv.Atoi(fmt.Sprintf("%v", userId))
+	userIdInt, _ := strconv.Atoi(fmt.Sprintf("%v", user.UserId))
 	order.UserOrdered = userIdInt
+
+	print(order.UserOrdered)
 
 	res, err := db.NamedExec("INSERT INTO `orders` (`order_id`, `text`, `time`, `user_ordered`) VALUES (NULL, :text, :time, :user_ordered);", &order)
 

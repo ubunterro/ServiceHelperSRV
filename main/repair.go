@@ -3,19 +3,20 @@ package main
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	//"io/ioutil"
 	"strconv"
 )
 
 type Repair struct {
-	Id                  int     `json:"id"     db:"doc_id"`
-	ClientName          string  `json:"client" db:"client_name"`
-	RepairStateId       int     `json:"status" db:"repair_state_id"`
-	ProductName         string  `json:"name"   db:"product_name"`
-	ProductSN           string  `json:"sn"     db:"product_sn"`
-	DefectDescription   string  `json:"def"    db:"defect_description"`
-	ReceivedWithProduct string  `json:"recv"   db:"received_with_product"`
-	Description         string  `json:"desc"   db:"description"`
-	Amount              float32 `json:"amount" db:"amount"`
+	Id                  int     `json:"id"            db:"doc_id"`
+	ClientName          string  `json:"client"        db:"client_name"`
+	RepairStateId       int     `json:"status,string" db:"repair_state_id"`
+	ProductName         string  `json:"name"          db:"product_name"`
+	ProductSN           string  `json:"sn"            db:"product_sn"`
+	DefectDescription   string  `json:"def"           db:"defect_description"`
+	ReceivedWithProduct string  `json:"recv"          db:"received_with_product"`
+	Description         string  `json:"desc"          db:"description"`
+	Amount              float32 `json:"amount"        db:"amount"`
 }
 
 func Read(c *gin.Context) {
@@ -25,7 +26,7 @@ func Read(c *gin.Context) {
 
 	db := DBConn()
 	//rows, err := db.Query("SELECT * FROM `repairs` WHERE CategoryID = ?", c.Param("id"))
-	err := db.Select(&repairs, "SELECT repairs.doc_id, clients.client_name, repairs.repair_state_id, products.product_name, products.product_sn, repairs.defect_description, repairs.received_with_product"+
+	err := db.Select(&repairs, "SELECT repairs.doc_id, clients.client_name, repairs.repair_state_id, products.product_name, products.product_sn, repairs.defect_description, repairs.received_with_product, repairs.description"+
 		" FROM `repairs` repairs"+
 		" INNER JOIN clients ON repairs.client_id = clients.client_id"+
 		" INNER JOIN products ON repairs.product_id = products.product_id"+
@@ -94,7 +95,9 @@ func Edit(c *gin.Context) {
 	// UPDATE repairs SET repair_state_id = 1, defect_description = '', received_with_product = '', amount = 0, description = 1 WHERE doc_id = 1;
 	db := DBConn()
 	var repair Repair
-	//fmt.Println(c.PostForm("id"))
+	//body, _ := ioutil.ReadAll(c.Request.Body)
+	//println(string(body))
+
 	err := c.BindJSON(&repair)
 	if err != nil {
 		c.JSON(500, gin.H{"type": "editRepair", "result": "badRequest"})
@@ -106,8 +109,10 @@ func Edit(c *gin.Context) {
 		return
 	}
 
-	userStatus, _ := c.Get("userStatus")
-	fmt.Println("STATUS IS ", userStatus)
+	//userStatus, _ := c.Get("userStatus")
+	_user, _ := c.Get("user")
+	user := _user.(User)
+	fmt.Println("STATUS IS ", user.Status)
 	fmt.Println(repair)
 	err = nil
 

@@ -47,7 +47,7 @@ func authenticateUser(username, password string) (result bool, user User) {
 	var DBpasswordHash string
 
 	err := db.QueryRow("SELECT pass, status, user_id, name FROM users WHERE login = ?;", username).Scan(&DBpasswordHash, &user.Status, &user.UserId, &user.UserName)
-	log.Println("STATUS", user.Status)
+	log.Println("USERID ", user.UserId)
 	if err != nil {
 		fmt.Println(err.Error())
 	} else {
@@ -95,4 +95,13 @@ func (c *Hash) Compare(hash string, s string) error {
 	incoming := []byte(s)
 	existing := []byte(hash)
 	return bcrypt.CompareHashAndPassword(existing, incoming)
+}
+
+//Auth returns credentials to a user
+func Auth(c *gin.Context) {
+	_user, _ := c.Get("user")
+	user := _user.(User)
+
+	// if user is authenticated successfully than he gets it. Otherwise, a standard Unauthorized error.
+	c.JSON(200, gin.H{"type": "auth", "name": user.UserName, "status": user.Status})
 }

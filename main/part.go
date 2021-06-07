@@ -3,6 +3,9 @@ package main
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"log"
+	"net/http"
+	"path/filepath"
 	"strconv"
 )
 
@@ -132,4 +135,51 @@ func DeletePart(c *gin.Context) {
 	}
 
 	defer db.Close()
+}
+
+// принимаем мультипарт файл через пост, key = "file"
+func UploadFile(c *gin.Context) {
+	uploadId, err := strconv.Atoi(c.Param("id"))
+
+	if err != nil {
+		c.JSON(200, gin.H{"type": "uploadPartImg", "result": "notCorrectNumber"})
+		return
+	}
+
+	print(uploadId)
+
+	// проверяем айдишник на корректность
+	if uploadId <= 0 {
+		c.JSON(200, gin.H{"type": "uploadPartImg", "result": "notCorrectNumberLessOrZero"})
+		return
+	}
+	file, err := c.FormFile("file")
+
+	// The file cannot be received.
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"message": "No file is received",
+		})
+		return
+	}
+
+	// Retrieve file information
+	extension := filepath.Ext(file.Filename)
+
+	// Generate random file name for the new uploaded file so it doesn't override the old file with same name
+	newFileName := c.Param("id") + extension
+
+	absPath, _ := filepath.Abs("../ServiceHelperSRV/storage/partImg/")
+	log.Println(absPath + newFileName)
+
+	// The file is received, so let's save it
+	if err := c.SaveUploadedFile(file, absPath+newFileName); err != nil {
+		log.Println(err.Error())
+		c.JSON(200, gin.H{"type": "uploadPartImg", "result": "unableToSave"})
+		return
+	}
+
+	// File saved successfully. Return proper result
+	c.JSON(200, gin.H{"type": "uploadPartImg", "result": "ok"})
+
 }

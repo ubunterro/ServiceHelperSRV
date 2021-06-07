@@ -27,6 +27,8 @@ func setupRouter() *gin.Engine {
 	client := r.Group("/api", basicAuth())
 	{
 
+		client.GET("/auth", Auth)
+
 		client.GET("/api", Read)
 		client.POST("/create", Create)
 		client.POST("/edit", Edit)
@@ -41,6 +43,7 @@ func setupRouter() *gin.Engine {
 		client.POST("/warehouse/create", CreatePart)
 		client.POST("/warehouse/edit/", EditPart)
 		client.POST("/warehouse/delete/:id", DeletePart)
+		client.POST("/warehouse/uploadImg/:id", UploadFile)
 	}
 
 	return r
