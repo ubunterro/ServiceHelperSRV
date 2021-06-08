@@ -56,12 +56,15 @@ func CreatePart(c *gin.Context) {
 
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
+		log.Println(err.Error())
 	} else {
 		count, _ := res.RowsAffected()
 		if count == 0 {
+			log.Println("not created part")
 			c.JSON(500, gin.H{"type": "addPart", "result": "notCreated"})
 			return
 		}
+		log.Println("created part")
 		c.JSON(200, gin.H{"type": "addPart", "result": "ok"})
 	}
 
@@ -170,16 +173,16 @@ func UploadFile(c *gin.Context) {
 	newFileName := c.Param("id") + extension
 
 	absPath, _ := filepath.Abs("../ServiceHelperSRV/storage/partImg/")
-	log.Println(absPath + newFileName)
+	log.Println(absPath + "\\" + newFileName)
 
 	// The file is received, so let's save it
-	if err := c.SaveUploadedFile(file, absPath+newFileName); err != nil {
+	if err := c.SaveUploadedFile(file, absPath+"\\"+newFileName); err != nil {
 		log.Println(err.Error())
 		c.JSON(200, gin.H{"type": "uploadPartImg", "result": "unableToSave"})
 		return
 	}
 
 	// File saved successfully. Return proper result
-	c.JSON(200, gin.H{"type": "uploadPartImg", "result": "ok"})
+	c.JSON(200, gin.H{"type": "uploadPartImg", "result": "ok", "filename": newFileName})
 
 }
